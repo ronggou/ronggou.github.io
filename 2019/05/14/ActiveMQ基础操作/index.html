@@ -102,7 +102,7 @@
 <meta property="og:site_name" content="子不语">
 <meta property="og:description" content="ActiveMQ安装与配置下载首先安装 JDK,并且下载好 apache-activemq-5.11.1-bin.tar.gz  解压$ tar -zxvf apache-activemq-5.11.1-bin.tar.gz  $ mv apache-activemq-5.11.1 activemq ##授权给 bin 目录下的脚本授权    $ cd /home/rgou/activemq/bi">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-14T06:21:18.188Z">
+<meta property="og:updated_time" content="2019-05-14T06:36:27.940Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ActiveMQ基础操作">
 <meta name="twitter:description" content="ActiveMQ安装与配置下载首先安装 JDK,并且下载好 apache-activemq-5.11.1-bin.tar.gz  解压$ tar -zxvf apache-activemq-5.11.1-bin.tar.gz  $ mv apache-activemq-5.11.1 activemq ##授权给 bin 目录下的脚本授权    $ cd /home/rgou/activemq/bi">
@@ -382,7 +382,7 @@
                 
               
 
-              <time title="创建时间：2019-05-14 14:09:02 / 修改时间：14:21:18" itemprop="dateCreated datePublished" datetime="2019-05-14T14:09:02+08:00">2019-05-14</time>
+              <time title="创建时间：2019-05-14 14:09:02 / 修改时间：14:36:27" itemprop="dateCreated datePublished" datetime="2019-05-14T14:09:02+08:00">2019-05-14</time>
             
 
             
@@ -442,7 +442,7 @@
         <h1 id="ActiveMQ安装与配置"><a href="#ActiveMQ安装与配置" class="headerlink" title="ActiveMQ安装与配置"></a>ActiveMQ安装与配置</h1><h2 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h2><p>首先安装 JDK,并且下载好 apache-activemq-5.11.1-bin.tar.gz </p>
 <h2 id="解压"><a href="#解压" class="headerlink" title="解压"></a>解压</h2><pre><code>$ tar -zxvf apache-activemq-5.11.1-bin.tar.gz 
 $ mv apache-activemq-5.11.1 activemq
-</code></pre><p>##授权<br>给 bin 目录下的脚本授权<br>    $ cd /home/rgou/activemq/bin/<br>    $ chmod 755 ./activemq </p>
+</code></pre><p>##授权<br>给 bin 目录下的脚本授权<br>    $ cd /home/rgou/activemq/bin/<br>    $ chmod 755 ./activemq<br><a id="more"></a></p>
 <h2 id="端口设置"><a href="#端口设置" class="headerlink" title="端口设置"></a>端口设置</h2><p>ActiveMQ需要用到两个端口<br>一个是消息通讯的端口（默口认为 61616）<br>一个是管理控制台端口（默认为 8161）可在 conf/jetty.xml 中修改，如下：<br>    &lt;bean id=”jettyPort” class=”org.apache.activemq.web.WebConsolePort” init-method=”start”<br>        <property name="”host”" value="”0.0.0.0”/"><br>        <property name="”port”" value="”8161”/"><br>    </property></property></p>
 <h2 id="防火墙"><a href="#防火墙" class="headerlink" title="防火墙"></a>防火墙</h2><p>在防火墙中打开端口(我试验时使用的是centos6.5 所以用的 iptables 防火墙,其他防火墙操作不同)<br>    vi /etc/sysconfig/ iptables</p>
 <h2 id="添加开放端口"><a href="#添加开放端口" class="headerlink" title="添加开放端口"></a>添加开放端口</h2><p>-A INPUT -m state –state NEW -m tcp -p tcp –dport 61616 -j ACCEPT<br>-A INPUT -m state –state NEW -m tcp -p tcp –dport 8161 -j ACCEPT</p>
