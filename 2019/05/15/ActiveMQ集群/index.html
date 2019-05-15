@@ -102,7 +102,7 @@
 <meta property="og:site_name" content="子不语">
 <meta property="og:description" content="ActiveMQ集群的部署方式主要有下面2种：  Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。 Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-15T06:11:57.523Z">
+<meta property="og:updated_time" content="2019-05-15T06:18:38.931Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ActiveMQ集群">
 <meta name="twitter:description" content="ActiveMQ集群的部署方式主要有下面2种：  Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。 Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。">
@@ -382,7 +382,7 @@
                 
               
 
-              <time title="创建时间：2019-05-15 13:29:01 / 修改时间：14:11:57" itemprop="dateCreated datePublished" datetime="2019-05-15T13:29:01+08:00">2019-05-15</time>
+              <time title="创建时间：2019-05-15 13:29:01 / 修改时间：14:18:38" itemprop="dateCreated datePublished" datetime="2019-05-15T13:29:01+08:00">2019-05-15</time>
             
 
             
@@ -508,7 +508,7 @@ failover://(tcp://master:61616,tcp://slave:61616)?randomize=false
 &lt;/broker&gt;  
 </code></pre><p>&emsp;&emsp;<em>shutdownOnMasterFailure</em>表示当master失效后，slave是否自动关闭，默认为false，表示slave将提升为master。</p>
 <p>&emsp;&emsp;不过我们需要注意，master与slave之间通过<strong>Tcp链接感知对方的状态</strong>，基于链接感知状态的“三节点网络”(Client,Master,slave)，结果总是不可靠的；如果master与slave实例都有效，只是master与slave之间的网络“阻断”，此时slave也会认为master失效，如果slave提升为master，对于Client而言将会出现2个master的“幻觉”。更坏的情况是，部分Client与旧master之间也处于网络阻断情况，那么就会出现部分Client链接在新master上，其他的Client链接在旧master上，数据的一致性将处于失控状态。(split-brain)为了避免出现“脑裂”现象，我们通常将“shutdownOnMasterFailure”（slave上）、“shutdownOnSlaveFailure”（master上）两个参数不能同时设置为false。</p>
-<h2 id="3-2-Shared-storage-master-slave"><a href="#3-2-Shared-storage-master-slave" class="headerlink" title="3.2  Shared storage master/slave"></a>3.2  Shared storage master/slave</h2><p>&emsp;&emsp;在上文中，我们已经了解了“Shared nothing”模式下的局限性，在企业级架构中它将不能作为一种可靠的方案而实施。ActiveMQ官方推荐“Shared storage”模式作为首选方案，并提供了多个优秀的存储策略，其中kahadb、levedbDB、JDBC Store等都可以便捷的接入。</p>
+<h2 id="Shared-storage-master-slave"><a href="#Shared-storage-master-slave" class="headerlink" title="Shared storage master/slave"></a>Shared storage master/slave</h2><p>&emsp;&emsp;在上文中，我们已经了解了“Shared nothing”模式下的局限性，在企业级架构中它将不能作为一种可靠的方案而实施。ActiveMQ官方推荐“Shared storage”模式作为首选方案，并提供了多个优秀的存储策略，其中kahadb、levedbDB、JDBC Store等都可以便捷的接入。</p>
 <p>&emsp;&emsp;“Shared storage”允许集群中有多个slave共存，因为存储数据在salve与master之间共享(物理共享)，所以当master失效后，slave自动接管服务，而无需手动进行数据的Copy与同步，也无需master与slave之间进行任何额外的数据交互，因为master存储数据之后，它们在任何时候对slave都是可见的。master与slave之间，通过共享文件的“排他锁”或者分布式排他锁(zookeeper)来决定broker的状态与角色，获取锁权限的broker作为master，如果master失效，它必将失去锁权限，那么slaves将通过锁竞争来选举新master，没有获取锁权限的broker作为slave，并等待锁的释放(间歇性尝试获取锁)。当然slaves仍然不能为Client服务， 它只为故障转移做准备。</p>
 <p>&emsp;&emsp;在此需要明确一个问题，“Shared storage”模式只会共享“持久化”类型的消息；对于非持久化消息将不能从从中收益，它们不会在slaves中备份，这也意味着如果master失效，即使slave接管了服务，此前保存在master上的非持久化消息也将丢失。通常，我们在“Shared storage”模式中，额外的配置一个插件，强制将所有消息转换成持久化类型，这样所有的消息都可以在故障恢复之后不会丢失。</p>
 <p><strong>配置文件</strong></p>
@@ -807,7 +807,7 @@ hostname=&quot;broker0&quot; /&gt;
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#失效转移连接"><span class="nav-number">1.</span> <span class="nav-text">失效转移连接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Broker-Clusters-部署"><span class="nav-number">2.</span> <span class="nav-text">Broker Clusters 部署</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Master-Slave-部署（主从）"><span class="nav-number">3.</span> <span class="nav-text">Master Slave 部署（主从）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Share-nothing-storage-master-slave"><span class="nav-number">3.1.</span> <span class="nav-text">Share nothing storage master/slave</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-Shared-storage-master-slave"><span class="nav-number">3.2.</span> <span class="nav-text">3.2  Shared storage master/slave</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Shared-File-System-master-slaves"><span class="nav-number">3.2.1.</span> <span class="nav-text">Shared File System master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JDBC-Store-master-slaves"><span class="nav-number">3.2.2.</span> <span class="nav-text">JDBC Store master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Replicated-LevelDB-Store"><span class="nav-number">3.2.3.</span> <span class="nav-text">Replicated LevelDB Store</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#失效转移连接"><span class="nav-number">1.</span> <span class="nav-text">失效转移连接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Broker-Clusters-部署"><span class="nav-number">2.</span> <span class="nav-text">Broker Clusters 部署</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Master-Slave-部署（主从）"><span class="nav-number">3.</span> <span class="nav-text">Master Slave 部署（主从）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Share-nothing-storage-master-slave"><span class="nav-number">3.1.</span> <span class="nav-text">Share nothing storage master/slave</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Shared-storage-master-slave"><span class="nav-number">3.2.</span> <span class="nav-text">Shared storage master/slave</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Shared-File-System-master-slaves"><span class="nav-number">3.2.1.</span> <span class="nav-text">Shared File System master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JDBC-Store-master-slaves"><span class="nav-number">3.2.2.</span> <span class="nav-text">JDBC Store master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Replicated-LevelDB-Store"><span class="nav-number">3.2.3.</span> <span class="nav-text">Replicated LevelDB Store</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>
