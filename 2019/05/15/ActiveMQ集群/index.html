@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html class="theme-next gemini" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="ActiveMQ集群的部署方式主要有下面2种：  Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。 Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。">
+<meta name="keywords" content="ActiveMQ,Java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActiveMQ集群">
+<meta property="og:url" content="http://yoursite.com/2019/05/15/ActiveMQ集群/index.html">
+<meta property="og:site_name" content="子不语">
+<meta property="og:description" content="ActiveMQ集群的部署方式主要有下面2种：  Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。 Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2019/05/15/ActiveMQ集群/images/queue.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/15/ActiveMQ集群/images/master.jpg">
+<meta property="og:updated_time" content="2019-05-15T06:03:05.065Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ActiveMQ集群">
+<meta name="twitter:description" content="ActiveMQ集群的部署方式主要有下面2种：  Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。 Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。">
+<meta name="twitter:image" content="http://yoursite.com/2019/05/15/ActiveMQ集群/images/queue.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/05/15/ActiveMQ集群/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>ActiveMQ集群 | 子不语</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">子不语</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/15/ActiveMQ集群/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="rgou">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/49423885?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="子不语">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">ActiveMQ集群
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-05-15 13:29:01 / 修改时间：14:03:05" itemprop="dateCreated datePublished" datetime="2019-05-15T13:29:01+08:00">2019-05-15</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/消息队列/" itemprop="url" rel="index"><span itemprop="name">消息队列</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>ActiveMQ集群的部署方式主要有下面2种：</p>
+<ol>
+<li>Broker Clusters 模式：实现负载均衡，多个broker之间同步消息，已达到服务器负载的可能。</li>
+<li>Master Slave 模式：实现高可用，当主服务器宕机时，备用服务器可以立即补充，以保证服务的继续。<a id="more"></a>
+<h1 id="失效转移连接"><a href="#失效转移连接" class="headerlink" title="失效转移连接"></a>失效转移连接</h1></li>
+</ol>
+<p>该策略用于控制消费者的访问，这是我们在编写代码的时候要使用的连接方式。一个消费者连接到多个broker集群的中的一个broker，当该broker出问题时，消费者自动连接到其他一个正常的broker。消费者使用 failover 协议来连接broker，通常叫做 失效转移（也叫故障转移，断线重连机制，FailOver）策略，语法如下：<br>    failover:(uri1,uri2,…,uriN)?transportOptions</p>
+<p>1.uri:消息服务器的地址 </p>
+<p>2.transportOptions参数说明： </p>
+<p>​        randomize：默认为 true ，表示在URI列表中选择URL连接时是否采用随机策略。 </p>
+<p>​        initialReconnectDelay：默认为10，单位为毫秒，表示一次尝试重连之间等待的时间。 </p>
+<p>​        maxReconnectDelay：默认 30000，单位毫秒，最长重连的时间间隔。</p>
+<p>例如：</p>
+<!-- 
+
+1. client使用failover协议来与有效的master交互  
+
+2. master地址在前，slave 在后，randomize 为 false让 Client优先与master通信  
+
+3. 如果 master 失效，failover协议将会尝试与slave建立链接，并依次重试
+
+-->
+<pre><code>failover:(tcp://localhost:61616,tcp://localhost:61617)?randomize=false
+</code></pre><h1 id="Broker-Clusters-部署"><a href="#Broker-Clusters-部署" class="headerlink" title="Broker Clusters 部署"></a>Broker Clusters 部署</h1><p>Broker-Cluster的部署方式就可以解决负载均衡的问题。Broker-Cluster部署方式中，各个broker通过网络互相连接，并共享queue，保证消息同步。</p>
+<p><img src="images/queue.png" alt="clipboard.png"></p>
+<p>各个broker进行消息同步使用的是<strong>NetworkConnection (网络连接器)</strong>，主要用于配置各个broker之间的网络通讯方式，用于服务器传递信息。 分为静态连接器和动态连接器。</p>
+<p>静态连接器</p>
+<pre><code>&lt;networkConnectors&gt;
+    &lt;networkConnector uri=&quot;static:(tcp://127.0.0.1:61617,tcp://127.0.0.1:61618)&quot;/&gt; 
+&lt;/networkConnectors&gt;
+</code></pre><p>动态连接器</p>
+<pre><code>&lt;!-- 网络连接器 --&gt;
+&lt;networkConnectors&gt;
+      &lt;networkConnector uri=&quot;multicast://default&quot;/&gt; 
+&lt;/networkConnectors&gt;
+&lt;!-- 传输连接器 --&gt;
+&lt;transprotConnectors&gt;
+&lt;transprotConnector uri=&quot;tcp://localhost:0&quot; discoveryUri=&quot;multicast://default&quot; /&gt;
+&lt;/transprotConnectors&gt;
+</code></pre><p>静态连接器过于局限，动态连接器可随意扩展服务器连接。</p>
+<h1 id="Master-Slave-部署（主从）"><a href="#Master-Slave-部署（主从）" class="headerlink" title="Master Slave 部署（主从）"></a>Master Slave 部署（主从）</h1><p>通过部署多个broker实例，选举产生一个master和多个slave，master宕机后由slave接管服务来达到高可用性。Master-Slave的方式虽然能解决多服务热备的高可用问题，但无法解决负载均衡和分布式的问题。Broker Cluster的部署方式刚好可以解决负载均衡的问题。一般两者结合使用。</p>
+<h2 id="3-1-Share-nothing-storage-master-slave"><a href="#3-1-Share-nothing-storage-master-slave" class="headerlink" title="3.1  Share nothing storage master/slave"></a>3.1  Share nothing storage master/slave</h2><p>最简单最典型的master-slave模式，master与slave有各自的存储系统，不共享任何数据。master接收到的所有指令(消息生产，消费，确认，事务，订阅等)都会同步发送给slave。在slave启动之前，首先启动master，在master有效时，salve将不会创建任何transportConnector，即Client不能与slave建立链接；如果master失效，slave是否接管服务是可选择的(参见下文配置)。在master与slave之间将会建立TCP链接用来数据同步，如果链接失效，那么master认为slave离线。</p>
+<p> <img src="images/master.jpg" alt="master/slave"></p>
+<p>对于持久化消息，将会采用同步的方式(sync)在master与slave之间备份，master接受到消息之后，首先发给slave，slave存储成功后，master才会存储消息并向producer发送ACK。</p>
+<p><strong>当master失效后，slave有两种选择：</strong><br><strong>1)</strong> <strong>关闭：</strong>如果slave检测到master失效，slave实例关闭自己。此后管理员需要手动依次启动master、slave来恢复服务。<br><strong>2)</strong> <strong>角色转换：</strong> slave将自己提升为master，并初始化transportConnector，此后Client可以通过failover协议切换到Slave上，并与slave交互。</p>
+<pre><code>//Client使用failover协议来与有效的master交互  
+//master地址在前，slave在后，randomize为false让Client优先与master通信 
+//如果master失效，failover协议将会尝试与slave建立链接，并依此重试  
+failover://(tcp://master:61616,tcp://slave:61616)?randomize=false  
+</code></pre><p>“Shared nothing”模式下，有很多局限性。master只能有一个slave，而且slave不能继续挂载slave。如果slave较晚的接入master，那么master上已有的消息不会同步给slave，只会同步那些slave接入之后的新消息，那也意味着slave并没有完全持有全局的所有消息；所以如果此时master失效，slave接入之前的消息有丢失的风险。如果一个新的slave接入master，或者一个失效时间较长的旧master接入新master，通常会首先关闭master，然后把master上所有的数据Copy给slave(或旧master)，然后依次启动它们。事实上，ActiveMQ没有提供任何有效的手段，能够让master与slave在故障恢复期间，自动进行数据同步。</p>
+<h3 id="Master-配置："><a href="#Master-配置：" class="headerlink" title="Master**配置：**"></a><strong>Master**</strong>配置：**</h3><p><strong>（</strong>配置文件<strong>）</strong></p>
+<pre><code>&lt;broker brokerName=&quot;master&quot; waitForSlave=&quot;true&quot; shutdownOnSlaveFailure=&quot;false&quot; waitForSlaveTimeout=&quot;600000&quot; useJmx=&quot;false&quot; &gt;  
+    ...  
+    &lt;transportConnectors&gt;  
+        &lt;transportConnector uri=&quot;tcp://localhost:61616&quot;/&gt;  
+    &lt;/transportConnectors&gt;  
+&lt;/broker&gt;  
+</code></pre><p> 其中<em>shutdownOnSlaveFailure</em>默认为false，即当slave失效时，master将继续服务，否则master也将关闭。<em>waitForSlave</em>表示当master启动之后，是否等待slave接入，如果为true，那么master将会等待<em>waitForSlaveTimeout</em>毫秒数，直到有slave接入之后master才会初始化transportConnector，此间Client无法与master交互；如果等待超时，则有shutdownOnSlaveFailure决定master是否关闭。</p>
+<h3 id="Slave-配置："><a href="#Slave-配置：" class="headerlink" title="Slave**配置：**"></a><strong>Slave**</strong>配置：**</h3><p><strong>（</strong> <strong>配置文件**</strong>）**</p>
+<pre><code>&lt;broker brokerName=&quot;slave&quot; shutdownOnMasterFailure=&quot;false&quot;&gt;  
+    &lt;services&gt;  
+        &lt;masterConnector remoteURI= &quot;tcp://master:61616&quot;/&gt;  
+    &lt;/services&gt;  
+    ....  
+     &lt;transportConnectors&gt;  
+        &lt;transportConnector uri=&quot;tcp://localhost:61616&quot;/&gt;  
+    &lt;/transportConnectors&gt;  
+&lt;/broker&gt;  
+</code></pre><p><em>shutdownOnMasterFailure</em>表示当master失效后，slave是否自动关闭，默认为false，表示slave将提升为master。</p>
+<p> 不过我们需要注意，master与slave之间通过<strong>Tcp链接感知对方的状态</strong>，基于链接感知状态的“三节点网络”(Client,Master,slave)，结果总是不可靠的；如果master与slave实例都有效，只是master与slave之间的网络“阻断”，此时slave也会认为master失效，如果slave提升为master，对于Client而言将会出现2个master的“幻觉”。更坏的情况是，部分Client与旧master之间也处于网络阻断情况，那么就会出现部分Client链接在新master上，其他的Client链接在旧master上，数据的一致性将处于失控状态。(split-brain)为了避免出现“脑裂”现象，我们通常将“shutdownOnMasterFailure”（slave上）、“shutdownOnSlaveFailure”（master上）两个参数不能同时设置为false。</p>
+<h2 id="3-2-Shared-storage-master-slave"><a href="#3-2-Shared-storage-master-slave" class="headerlink" title="3.2  Shared storage master/slave"></a>3.2  Shared storage master/slave</h2><p>   在上文中，我们已经了解了“Shared nothing”模式下的局限性，在企业级架构中它将不能作为一种可靠的方案而实施。ActiveMQ官方推荐“Shared storage”模式作为首选方案，并提供了多个优秀的存储策略，其中kahadb、levedbDB、JDBC Store等都可以便捷的接入。</p>
+<p>   “Shared storage”允许集群中有多个slave共存，因为存储数据在salve与master之间共享(物理共享)，所以当master失效后，slave自动接管服务，而无需手动进行数据的Copy与同步，也无需master与slave之间进行任何额外的数据交互，因为master存储数据之后，它们在任何时候对slave都是可见的。master与slave之间，通过共享文件的“排他锁”或者分布式排他锁(zookeeper)来决定broker的状态与角色，获取锁权限的broker作为master，如果master失效，它必将失去锁权限，那么slaves将通过锁竞争来选举新master，没有获取锁权限的broker作为slave，并等待锁的释放(间歇性尝试获取锁)。当然slaves仍然不能为Client服务， 它只为故障转移做准备。</p>
+<p>   在此需要明确一个问题，“Shared storage”模式只会共享“持久化”类型的消息；对于非持久化消息将不能从从中收益，它们不会在slaves中备份，这也意味着如果master失效，即使slave接管了服务，此前保存在master上的非持久化消息也将丢失。通常，我们在“Shared storage”模式中，额外的配置一个插件，强制将所有消息转换成持久化类型，这样所有的消息都可以在故障恢复之后不会丢失。</p>
+<p><strong>配置文件</strong></p>
+<pre><code>&lt;broker&gt;    
+    &lt;plugins&gt;    
+        &lt;!-- 将所有消息的传输模式，修改为&quot;PERSISTENT&quot; --&gt;    
+        &lt;forcePersistencyModeBrokerPlugin persistenceFlag=&quot;true&quot;/&gt;    
+    &lt;/plugins&gt;    
+ &lt;/broker&gt;  
+</code></pre><h3 id="3-2-1-Shared-File-System-master-slaves"><a href="#3-2-1-Shared-File-System-master-slaves" class="headerlink" title="3.2.1  Shared File System master/slaves"></a>3.2.1  Shared File System master/slaves</h3><p>   基于共享文件系统的master/slaves模式，此处所谓的“共享文件系统”目前只能是基于POSIX接口可以访问的文件系统，比如本地文件系统或者SAN分布式共享文件系统(比如:<strong>glusterFS</strong>)；对于broker而言，启动时将会首先获取存储引擎的文件锁，如果获取成功才能继续初始化transportConnector，否则它将一直尝试获取锁(tryLock)，那么对于共享文件系统而言，需要严格确保任何时候只能有一个进程获取排他锁，如果你选择的SAN文件系统不能保证此条件，那么将不能作为master/slavers的共享存储引擎。</p>
+<p>   “Shared File System”这种方式是最常用的模式，架构简单，可靠实用。我们只需要一个SAN文件系统即可。</p>
+<p>   在这种模式下，master与slave的配置几乎可以完全一样。如下示例中，我们使用一个master和一个slave，它们部署在一个物理机器上，使用本地文件系统作为“共享文件系统”。（仅作示例，不可用于生产环境）</p>
+<p><strong>Master/Slave**</strong>配置：**</p>
+<pre><code>&lt;broker xmlns=&quot;http://activemq.apache.org/schema/core&quot; brokerName=&quot;broker-locahost-0&quot; useJmx=&quot;false&quot;&gt;
+    &lt;persistenceAdapter&gt;
+        &lt;levelDB directory=&quot;/data/leveldb&quot;/&gt;
+    &lt;/persistenceAdapter&gt;
+
+    &lt;tempDataStore&gt;
+        &lt;levelDB directory=&quot;/data/leveldb/tmp&quot;/&gt;
+    &lt;/tempDataStore&gt;  
+    &lt;!--  
+    &lt;persistenceAdapter&gt;  
+        &lt;kahaDB directory=&quot;/data/kahadb&quot;/&gt;  
+    &lt;/persistenceAdapter&gt; 
+
+    &lt;tempDataStore&gt;  
+        &lt;pListStoreImpl directory=&quot;/data/kahadb/tmp&quot;/&gt;  
+    &lt;/tempDataStore&gt;  
+    --&gt;  
+
+    &lt;transportConnectors&gt;  
+    &lt;!-- slave --&gt;  
+    &lt;!--  
+        &lt;transportConnector name=&quot;openwire&quot; uri=&quot;tcp://0.0.0.0:51616?maximumConnections=1000&amp;amp;wireformat.maxFrameSize=104857600&quot;/&gt;  
+    --&gt;  
+        &lt;transportConnector name=&quot;openwire&quot; uri=&quot;tcp://0.0.0.0:61616?maximumConnections=1000&amp;amp;wireformat.maxFrameSize=104857600&quot;/&gt;  
+     &lt;/transportConnectors&gt;  
+&lt;/broker&gt;
+</code></pre><h3 id="JDBC-Store-master-slaves"><a href="#JDBC-Store-master-slaves" class="headerlink" title="JDBC Store master/slaves"></a>JDBC Store master/slaves</h3><p>   显而易见，数据存储引擎为database，activeMQ通过JDBC的方式与database交互，排他锁使用database的表级排他锁，其他原理基本上和1)一致。JDBC Store相对于日志文件而言，通常认为是低效的，尽管数据的可见性较好，但是database的扩容能力非常的弱，无法良好的适应在高并发、大数据情况下（严格来说，单组M-S架构是无法支持大数据的），况且ActiveMQ的消息通常存储时间较短，频繁的写入，频繁的删除，都是性能的影响点。我们通常在研究activeMQ的存储原理时使用JDBC Store，或者在中小型应用中对数据一致性(可靠性，可见性)要求较高的环境中使用：比如订单系统中交易流程支撑系统等。但是因为JDBC架构的实施简便，易于管理，我们仍然倾向于首选这种方式。</p>
+<p>   在使用JDBC Store之前，必须有一个稳定的database，且指定授权给acitvemq中的链接用户具有“创建表”和普通CRUD的权限。master与slave中的配置文件基本一样，开发者需要注意brokerName和brokerId全局不可重复。此外还需要把相应的jdbc-connector的jar包copy到${acitvemq}/lib/optional目录下。</p>
+<p><strong>Master/Slave**</strong>配置：**</p>
+<pre><code>&lt;broker brokerName=&quot;broker-locahost-0&quot;&gt;  
+    &lt;persistenceAdapter&gt;  
+        &lt;jdbcPersistenceAdapter dataSource=&quot;#mysql-ds&quot;/&gt;  
+    &lt;/persistenceAdapter&gt; 
+
+    &lt;transportConnectors&gt;  
+    &lt;!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB --&gt;  
+        &lt;transportConnector name=&quot;openwire&quot; uri=&quot;tcp://0.0.0.0:61616?maximumConnections=1000&amp;amp;wireformat.maxFrameSize=104857600&quot;/&gt;  
+    &lt;/transportConnectors&gt;  
+&lt;/broker&gt; 
+
+
+
+&lt;bean id=&quot;mysql-ds&quot; **class**=&quot;org.apache.commons.dbcp.BasicDataSource&quot; destroy-method=&quot;close&quot;&gt;  
+    &lt;property name=&quot;driverClassName&quot; value=&quot;com.mysql.jdbc.Driver&quot;/&gt;  
+    &lt;property name=&quot;url&quot; value=&quot;jdbc:mysql://localhost:3306/activemq?relaxAutoCommit=true&quot;/&gt;  
+    &lt;property name=&quot;username&quot; value=&quot;root&quot;/&gt;  
+    &lt;property name=&quot;password&quot; value=&quot;root&quot;/&gt;  
+    &lt;property name=&quot;poolPreparedStatements&quot; value=&quot;true&quot;/&gt;  
+&lt;/bean&gt;  
+</code></pre><p>   JDBC Store有个小小的问题，就是临时文件无法保存在database中，我们不能在<tmpdatastore>使用JDBC Store；所以临时文件还是只能保存在broker本地。（即非持久消息不会保存在database中，只会保存在master上）</tmpdatastore></p>
+<h3 id="Replicated-LevelDB-Store"><a href="#Replicated-LevelDB-Store" class="headerlink" title="Replicated LevelDB Store"></a>Replicated LevelDB Store</h3><p>   基于复制的LevelDB Store，这是ActiveMQ全力打造的HA存储引擎，也是目前比较符合“Master-slave”架构模型的存储方案，<strong>此特性在5.9+版本中支持</strong>。我们从1)/2)两个方案中可见，“Shared Storage”模式只是利用了“一些小伎俩”，并不符合广泛意义上的“master-slave”模型(在存储上，和通讯机制上)。不过，“Replicated LevelDB Store”做到了！！</p>
+<p>   “Replicated LevelDB”也同样允许有多个Slaves，而且Slaves的个数有了约束性的限制，这归结于其使用zookeeper作为Broker master选举。每个Broker实例将消息数据保存本地(类似于“Shared nothing”)，它们之间并不共享任何数据，所以把“Replicated LevelDB”归类为“Shared storage”并不妥当。</p>
+<p>   当Broker启动时，它首先向zookeeper注册自己的信息(brokerName，消息日志的版本戳等)，如果此时group中没有其他broker实例，并阻塞初始化过程，等到足够多的broker加入group；当brokers的数量达到“replicas的多数派”时，开始选举，选举将会根据“消息日志的版本戳”、“权重”的大小决定，即“版本戳”越大(数据最新)、权重越高的broker优先成为master，其他broker作为slave并跟随master。当一个broker成为master时，它会向zookeer注册自己的sync地址信息；此后slaves首先根据sync地址与master建立链接，并同步消息文件(download)。当足够多的slave数据同步结束后，master将初始化transportConnector，此后Client将可以与master进行数据交互。</p>
+<pre><code>&lt;broker xmlns=&quot;http://activemq.apache.org/schema/core&quot; brokerName=&quot;mq-group&quot; brokerId=&quot;mq-group-0&quot; dataDirectory=&quot;${activemq.data}&quot;&gt;  
+    &lt;persistenceAdapter&gt;  
+        &lt;replicatedLevelDB directory=&quot;${activemq.data}&quot; replicas=&quot;2&quot; bind=&quot;tcp://127.0.0.1:0&quot;  zkAddress=&quot;127.0.0.1:2181&quot;  zkSessionTmeout=&quot;30s&quot; zkPath=&quot;/activemq/leveldb-stores&quot;  
+hostname=&quot;broker0&quot; /&gt;  
+    &lt;/persistenceAdapter&gt;  
+&lt;/broker&gt;  
+</code></pre><p>   Master-slaves集群中，所有的broker必须具有相同的brokerName，它作为group域来限定集群的成员，brokerId可以不同，它仅作为描述信息。“replicas”参数非常重要，默认为3，表示消息最多可以备份在几个broker实例上，同是只有当“replicas/2 + 1”个broker存活时(包含master)，集群才有效，才会选举master和备份消息，此值必须&gt;=2。Client发送给Master的持久化消息(包括ACK和事务)，master首先在本地保存，然后立即同步(sync)给选定的(replicas/2)个slaves，只有当这些节点也同步成功后，此消息的交互才算结束；对于剩下的replicas个节点，master采用异步的方式(async)转发。这种设计要求，可以保证集群中消息的可靠性，只有当(replicas/2 + 1)个节点物理故障，才会有丢失消息的风险。通常replicas为3，这要求开发者需要至少部署3个broker实例。如果replicas过大，会严重影响master的吞吐能力，因为它在sync消息的过程中会消耗太多的时间。</p>
+<p>   如果集群故障，在重启broker实例时，建议首先查看每个broker中查看LevelDB日志文件的版本戳(文件名为16进制数字)，并优先启动版本戳较大的实例。(因为replicas多数派的约束，随机重启也不会有太大的问题)。但是不得随意调小replicas的值，如果你确实需要修改，那就首先关闭集群，一定优先启动版本戳最大的broker。</p>
+<p>   尽管集群对zookeeper的操作并不是很多，但是我们还是希望不要接入负载过高的zookeeper集群，以免给消息服务引入不稳定因素。通常zookeeper集群至少需要3个实例，才能保证zookeeper本身的高可用性。</p>
+<p>   其中<em>bind</em>属性表示当此broker实例成为master时，开启一个socket地址，此后slave可以通过此地址与其同步数据。</p>
+<p>   我们还需要为Replicated LevelDB配置zookeeper的地址和<em>path</em>，其中path下用来存储group中所有broker的注册信息，此值在group中所有的broker上都要一样。“hostname”用来描述当前机器的核心信息，通常为机器IP。如果你在本机构建伪分布式，那么需要在系统hosts文件中使用转义。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ActiveMQ/" rel="tag"># ActiveMQ</a>
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/14/ActiveMQ基础操作/" rel="next" title="ActiveMQ基础操作">
+                <i class="fa fa-chevron-left"></i> ActiveMQ基础操作
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars0.githubusercontent.com/u/49423885?s=460&v=4" alt="rgou">
+            
+              <p class="site-author-name" itemprop="name">rgou</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/ronggou" title="GitHub &rarr; https://github.com/ronggou" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:gourongxx@foxmail.com" title="E-Mail &rarr; mailto:gourongxx@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#失效转移连接"><span class="nav-number">1.</span> <span class="nav-text">失效转移连接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Broker-Clusters-部署"><span class="nav-number">2.</span> <span class="nav-text">Broker Clusters 部署</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Master-Slave-部署（主从）"><span class="nav-number">3.</span> <span class="nav-text">Master Slave 部署（主从）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-Share-nothing-storage-master-slave"><span class="nav-number">3.1.</span> <span class="nav-text">3.1  Share nothing storage master/slave</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Master-配置："><span class="nav-number">3.1.1.</span> <span class="nav-text">Master**配置：**</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slave-配置："><span class="nav-number">3.1.2.</span> <span class="nav-text">Slave**配置：**</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-Shared-storage-master-slave"><span class="nav-number">3.2.</span> <span class="nav-text">3.2  Shared storage master/slave</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-1-Shared-File-System-master-slaves"><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1  Shared File System master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JDBC-Store-master-slaves"><span class="nav-number">3.2.2.</span> <span class="nav-text">JDBC Store master/slaves</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Replicated-LevelDB-Store"><span class="nav-number">3.2.3.</span> <span class="nav-text">Replicated LevelDB Store</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-snowflake-o"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">rgou</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.1"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
