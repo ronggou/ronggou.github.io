@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html class="theme-next gemini" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="ActiveMQ需要监控的内容监控硬件物理空间&amp;emsp;&amp;emsp;ActiveMQ有3个重要的参数，存储空间百分比，内存空间百分比和临时空间百分比。这三个参数的意义很明显，如果值到了100，则表明硬件空间已满，Broker不能再接受任何的消息了，除非有消息消费并且删除，Broker才可以再接收消息。">
+<meta name="keywords" content="ActiveMQ,Java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActiveMQ监控">
+<meta property="og:url" content="http://yoursite.com/2019/05/16/ActiveMQ监控/index.html">
+<meta property="og:site_name" content="子不语">
+<meta property="og:description" content="ActiveMQ需要监控的内容监控硬件物理空间&amp;emsp;&amp;emsp;ActiveMQ有3个重要的参数，存储空间百分比，内存空间百分比和临时空间百分比。这三个参数的意义很明显，如果值到了100，则表明硬件空间已满，Broker不能再接受任何的消息了，除非有消息消费并且删除，Broker才可以再接收消息。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/1.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/2.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/3.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/4.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/5.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/1.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/7.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/8.png">
+<meta property="og:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/9.png">
+<meta property="og:updated_time" content="2019-05-16T05:49:29.826Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ActiveMQ监控">
+<meta name="twitter:description" content="ActiveMQ需要监控的内容监控硬件物理空间&amp;emsp;&amp;emsp;ActiveMQ有3个重要的参数，存储空间百分比，内存空间百分比和临时空间百分比。这三个参数的意义很明显，如果值到了100，则表明硬件空间已满，Broker不能再接受任何的消息了，除非有消息消费并且删除，Broker才可以再接收消息。">
+<meta name="twitter:image" content="http://yoursite.com/2019/05/16/ActiveMQ监控/images/1.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/05/16/ActiveMQ监控/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>ActiveMQ监控 | 子不语</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">子不语</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/16/ActiveMQ监控/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="rgou">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/49423885?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="子不语">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">ActiveMQ监控
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-05-16 13:26:00 / 修改时间：13:49:29" itemprop="dateCreated datePublished" datetime="2019-05-16T13:26:00+08:00">2019-05-16</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/消息队列/" itemprop="url" rel="index"><span itemprop="name">消息队列</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="ActiveMQ需要监控的内容"><a href="#ActiveMQ需要监控的内容" class="headerlink" title="ActiveMQ需要监控的内容"></a>ActiveMQ需要监控的内容</h1><h2 id="监控硬件物理空间"><a href="#监控硬件物理空间" class="headerlink" title="监控硬件物理空间"></a>监控硬件物理空间</h2><p>&emsp;&emsp;ActiveMQ有3个重要的参数，存储空间百分比，内存空间百分比和临时空间百分比。这三个参数的意义很明显，如果值到了100，则表明硬件空间已满，Broker不能再接受任何的消息了，除非有消息消费并且删除，Broker才可以再接收消息。<br><a id="more"></a></p>
+<p>&emsp;&emsp;如果这些值长时间都比较高，接近阀值，则表示硬件的配置不能满足要求，建议更换硬件，或者给予ActiveMQ的环境配置比较小，建议给予更多的资源给ActiveMQ。</p>
+<p>&emsp;&emsp;如果平时保持在一个稳定值，有一段时间突然增高，则有两种可能。一种可能是用户量大增（当然大家都希望是这样），另一种可能是某个或者某几个消息消费者死机了。需要人工干预重启。还有一种可能是平时保持在一个稳定值，但是一段时间内突然降低了，则表示消息的生产者可能出现问题了。</p>
+<h2 id="监控队列"><a href="#监控队列" class="headerlink" title="监控队列"></a>监控队列</h2><p>&emsp;&emsp;如果ActiveMQ使用队列，需要监控队列的未消费消息数量，消费者数量，消息入队和出队的数量。<br>&emsp;&emsp;未消费消息数量的含义和监控硬件的内存和硬盘空间差不多，过多的消息堆积可能是有消息消费者死机。<br>&emsp;&emsp;消费者数量应该是一个相对固定的值，这个值减少，就直接表示有的消费者已经死机。消息入队和出队数量如果增长缓慢或者不增长，则表示消息发送者已经死机。一般是通过增量监控。</p>
+<h2 id="监控主题"><a href="#监控主题" class="headerlink" title="监控主题"></a>监控主题</h2><p>&emsp;&emsp;如果ActiveMQ使用主题，需要监控的内容和队列相似，但是没有未消费的消息数量。这里指的注意的是，ActiveMQ提供Advisory Message，用于帮助使用统计一些额外信息。</p>
+<h2 id="监控订阅者"><a href="#监控订阅者" class="headerlink" title="监控订阅者"></a>监控订阅者</h2><p>&emsp;&emsp;同样，如果ActiveMQ使用主题，订阅者的信息就十分重要。需要监控已经下线的订阅者。</p>
+<h1 id="ActiveMQ监控方法"><a href="#ActiveMQ监控方法" class="headerlink" title="ActiveMQ监控方法"></a>ActiveMQ监控方法</h1><h2 id="Web-Console监控"><a href="#Web-Console监控" class="headerlink" title="Web Console监控"></a>Web Console监控</h2><p>&emsp;&emsp;Web Console是最简单的，不需要任何配置就能使用的监控方式。同时也是最直观的监控方式。直接在浏览器访问<a href="http://activemq-host:8161/admin/。" target="_blank" rel="noopener">http://activemq-host:8161/admin/。</a> 把localhost换成activemq启动机器的ip，端口号默认是8161，可以在${ACTIVEMQ_HOME}/conf/jetty.xml 中修改。默认的用户名和密码都是admin。</p>
+<p>进入页面首先看到图1：</p>
+<p><img src="images/1.png" alt="ActiveMQ"><br>其中下面的红色框中标示出的就是硬件物理空间。</p>
+<p>然后点击上面红色框可以进入队列的监控页面。图2：</p>
+<p><img src="images/2.png" alt="ActiveMQ"><br>可以看到上面所提到的队列的一些重要数据。点击傍边的Topics可以进入主题监控页面。 </p>
+<p>下面看一下订阅者监控界面。图3：<br><img src="images/3.png" alt="ActiveMQ"><br>需要重点关注的是中间红色框圈住的部分，是离线的订阅者。</p>
+<p>&emsp;&emsp;<strong>页面一目了然。但是缺点是，不适合程序直接抓数据，写监控脚本，自动报警</strong>等。在这张图右边红色框部分。分别提供了队列，主题和订阅者的xml数据，下图是队列的xml数据。图4：</p>
+<p><img src="images/4.png" alt="ActiveMQ"></p>
+<p>&emsp;&emsp;这样就便于程序去访问这些数据。但是缺点是数据不够全，且xml也不如json容易解析，用shell脚本解析的话比较麻烦。shell解析的话，命令行的方式才是最舒服的。</p>
+<h2 id="命令行监控"><a href="#命令行监控" class="headerlink" title="命令行监控"></a>命令行监控</h2><p>ActiveMQ当然也提供了命令行监控的方式。执行${ACTIVEMQ_HOME}/bin/activemq，会列出命令行的使用帮助。虽然Windows平台也可以使用这个命令行，但是仅仅限于启动ActiveMQ实例，其他命令都不能很好的支持，所以这里所说的命令行方式，都是在Linux平台上的。图5：<br><img src="images/5.png" alt="ActiveMQ"></p>
+<p>&emsp;&emsp;这里只是截取了重要的部分。可以看到命令行提供了16个命令，包括start，stop，restart，console等启动停止实例相关的命令。还有一些控制ActiveMQ Broker的命令，如create，purge等。这里主要介绍几个监控可能用得到的命令。</p>
+<p>activemq status：显示当前的ActiveMQ是否运行正常，并且能显示pid。图6：</p>
+<p><img src="images/1.png" alt="ActiveMQ"><br>activemq list: 列出当前Broker名字。</p>
+<p>activemq bstat: 显示当前Broker的统计信息。</p>
+<p>activemq query: 根据筛选条件显示Broker的统计信息。如：activemq query -QQueue=string_queue，是只显示string_queue这个队列的统计信息。更多使用方法可以使用activemq query –help显示帮助。</p>
+<p>activemq browse: 可以查询当前Broker为被消费的消息，会显示消息的详细信息，如消息头，消息内容，优先级等。类似于数据库的查询功能。有自己的一套查询语法但是不是很复杂，同样可以使用activemq browse –help显示帮助。需要注意的是，只有Queue才可以查询，Topic是不可以的，所以这个功能虽然强大，但是有点鸡肋。</p>
+<p>activemq dstat: 比较有用的一个功能，可以用来查询队列的关键数值，如队列大小，生产者消费者数量，消息出队入队统计等。还可以支持通过类别查询，如只查询队列或者只查询主题。图7：<br><img src="images/7.png" alt="ActiveMQ"></p>
+<p>&emsp;&emsp;activemq status和activemq dstat是比较常用的两个监控命令，可以使用shell，然后grep/awk解析。<strong>命令行虽然方便，但是明显缺失必要的信息，如硬件使用百分比，订阅者下线信息等。</strong></p>
+<h2 id="JMX监控"><a href="#JMX监控" class="headerlink" title="JMX监控"></a>JMX监控</h2><p>&emsp;&emsp;由Java开发的程序，一般都是支持JMX监控的，ActiveMQ也不例外。JMX监控是最全的，任何细节都可以通过JMX获取。如果远程连接JMX监控需要一些额外的配置。本机直接连接不需要，但是由于ActiveMQ是部署在linux上，所以应该很少有人会直接连接本地的JMX，除非是本地开发调试阶段。</p>
+<p>1 修改/etc/hosts 检查hosts文件设置，不用127.0.0.1，用实际IP地址。</p>
+<p>2 修改${ACTIVEMQ_HOME}/bin/active文件。找到下面几行，是连续的。应该都是注释掉的，解除注释，开启远程连接JMX，端口号默认是11099。</p>
+<pre><code>ACTIVEMQ_SUNJMX_START=&quot;-Dcom.sun.management.jmxremote.port=11099 &quot;             ACTIVEMQ_SUNJMX_START=&quot;$ACTIVEMQ_SUNJMX_START -        Dcom.sun.management.jmxremote.password.file=${ACTIVEMQ_CONF}/jmx.password&quot; ACTIVEMQ_SUNJMX_START=&quot;$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote.access.file=${ACTIVEMQ_CONF}/jmx.access&quot; ACTIVEMQ_SUNJMX_START=&quot;$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote.ssl=false&quot; ACTIVEMQ_SUNJMX_START=&quot;$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote&quot;
+</code></pre><p>3修改JMX用户和密码文件，必须是当前用户只读，别的用户无权限。否则启动时会报异常。</p>
+<pre><code>chmod 400 ${ACTIVEMQ_HOME}/conf/jmx.*
+</code></pre><p>其中jmx.access是用户权限配置文件，jmx.password是用户密码配置文件。</p>
+<p>&emsp;&emsp;配置到此，就可以使用jconsole等客户端连接了。启动jconsle，选择远程进程，填写remotehost:11099。其中remotehost是ActiveMQ所在机器的ip地址，11099是配置文件中开启的监听端口号。默认用户名是admin,密码是activemq。默认用户名和密码可以在 jmx.access和jmx.password修改。连接之后如下图8：</p>
+<p><img src="images/8.png" alt="ActiveMQ"></p>
+<p>可以看到，从左侧树形菜单可以找到ActiveMQ的mbean，然后可以查看任何公开的JMX属性。<br>如果你配置完了前3步，仍然不能远程连接JMX，请继续下面的配置。</p>
+<p>4查看${ACTIVEMQ_HOME}/conf/activemq.xml中的broker节点中useJmx=”true”属性。这个属性可以没有或者为true，但是不可以是false。</p>
+<p>5修改${ACTIVEMQ_HOME}/conf/activemq.xml中的broker节点中找到managementContext节点，修改如下：<br>其中connectorPort是你想发布的JMX端口号。注意端口号必须和之前${ACTIVEMQ_HOME}/bin/activemq里发布的端口号保持一致。</p>
+<p><strong>JMX可以使用java开发程序，进行监测。但是对其他语言的支持有限。</strong></p>
+<h2 id="JMX-REST-API"><a href="#JMX-REST-API" class="headerlink" title="JMX REST API"></a>JMX REST API</h2><p>&emsp;&emsp;前面提到Web Console也有xml的数据展现形式，但是解析困难且数据不全。而命令行模式数据更加不全。所以，ActiveMQ提供把JMX导出为REST API。这样就最大限度的满足了各种需求，既有完整的数据，又可以方便编写程序监控。当然如果以后命令行的方式能提供更多的信息，那么这个JMX REST API就可以被替代了。但是至少现在来说，他是不可替代的。</p>
+<p>&emsp;&emsp;ActiveMQ使用一个开源的组件Jolokia来将JMX自动发布成为REST API。如果使用这个方式，你不需要配置那些上一节提到的繁琐远程JMX配置。他的原理是使用本地的JMX，然后通过HTTP发布出来，并不是远程访问JMX。</p>
+<p>&emsp;&emsp;在浏览器访问<a href="http://activemq-host:8161/api/jolokia/。默认的用户名和密码同样都是admin。可以看到浏览器会返回json信息来描述当前系统。" target="_blank" rel="noopener">http://activemq-host:8161/api/jolokia/。默认的用户名和密码同样都是admin。可以看到浏览器会返回json信息来描述当前系统。</a></p>
+<pre><code>{&quot;request&quot;:{&quot;type&quot;:&quot;version&quot;},&quot;value&quot;:{&quot;agent&quot;:&quot;1.2.1&quot;,&quot;protocol&quot;:&quot;7.1&quot;,&quot;config&quot;:{&quot;discoveryEnabled&quot;:&quot;false&quot;,&quot;agentId&quot;:&quot;xxx.xxx.xxx.xxx-29009-71a9b4c7-servlet&quot;,&quot;agentType&quot;:&quot;servlet&quot;,&quot;agentDescription&quot;:&quot;Apache ActiveMQ&quot;},&quot;info&quot;:{&quot;product&quot;:&quot;activemq&quot;,&quot;vendor&quot;:&quot;Apache&quot;,&quot;version&quot;:&quot;5.10.0&quot;}},&quot;timestamp&quot;:1405499528,&quot;status&quot;:200}
+</code></pre><p>通过Jolokia API可以访问JMX发布的任何mbean。</p>
+<p><a href="http://activemq-host:8161/api/jolokia/list" target="_blank" rel="noopener">http://activemq-host:8161/api/jolokia/list</a>  显示当前所有的mbean。<br><a href="http://activemq-host:8161/api/jolokia/read//" target="_blank" rel="noopener">http://activemq-host:8161/api/jolokia/read//</a> 显示某个mbean的某个属性。还有很多其他的操作，如<a href="http://activemq-host:8161/api/jolokia/write//可以动态执行方法。" target="_blank" rel="noopener">http://activemq-host:8161/api/jolokia/write//可以动态执行方法。</a><br>我们重点关注<a href="http://activemq-host:8161/api/jolokia/read/。先说一下Mbean名字的规则。一般的MBean名字类似于：" target="_blank" rel="noopener">http://activemq-host:8161/api/jolokia/read/。先说一下Mbean名字的规则。一般的MBean名字类似于：</a> org.apache.activemq:type=Broker,brokerName=DemoBroker</p>
+<p>org.apache.activemq:是ActiveMQ在这个Mbean的Domain名，可以修改managementContext的jmxDomainName中配置名称。<br>type=Broker是固定的。<br>brokerName=DemoBroker，其中DemoBroker是在配置文件中Broker所配置的名字。<br>后面会有一些自定义属性。如：destinationType=Queue,destinationName=pojo_queue。</p>
+<p>下面给出具体例子。<br><a href="http://10.2activemq-host:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=DemoBroker/TotalEnqueueCount" target="_blank" rel="noopener">http://10.2activemq-host:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=DemoBroker/TotalEnqueueCount</a></p>
+<p>获取入队的消息总数，返回结果如下：</p>
+<pre><code>{&quot;request&quot;:{&quot;mbean&quot;:&quot;org.apache.activemq:brokerName=DemoBroker,type=Broker&quot;,&quot;attribute&quot;:&quot;TotalEnqueueCount&quot;,&quot;type&quot;:&quot;read&quot;},&quot;value&quot;:5672,&quot;timestamp&quot;:1405501289,&quot;status&quot;:200}
+</code></pre><p>关键的数据是value的值5672，表示有5672个消息入队。</p>
+<p>如果使用shell编写监控脚本，可以使用命令：</p>
+<pre><code>wget --user admin --password admin --auth-no-challenge http://activemq-host:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=localhost/TotalEnqueueCount
+</code></pre><p>下面列出几个关键的监控属性。</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,service=Health/CurrentStatus
+</code></pre><p>获取当前系统状态</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName= localhost /MemoryPercentUsage
+</code></pre><p>获取内存使用量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost/StorePercentUsage
+</code></pre><p>获取硬盘空间使用量</p>
+<pre><code>/ read/org.apache.activemq:type=Broker,brokerName=localhost/TempPercentUsage
+</code></pre><p>获取临时文件硬盘空间使用量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=pojo_queue/QueueSize
+</code></pre><p>获取队列pojo_queue的未消费消息数量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=pojo_queue/ProducerCount
+</code></pre><p>获取队列pojo_queue的生产者数量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=pojo_queue/ConsumerCount
+</code></pre><p>获取队列pojo_queue的消费者数量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=pojo_queue/EnqueueCount
+</code></pre><p>获取队列pojo_queue的已消费消息数量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=pojo_queue/DequeueCount
+</code></pre><p>获取队列pojo_queue的已接收消息数量</p>
+<pre><code>/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Topic,destinationName=pojo_topic,endpoint=Consumer,clientId=pojo_client_1,consumerId=Durable(pojo_client_1_pojo_client_1)/Active
+</code></pre><p>获取主题pojo_topic的client id为pojo_client_1的订阅者是否已经下线。</p>
+<h2 id="Advisory-Message监控"><a href="#Advisory-Message监控" class="headerlink" title="Advisory Message监控"></a>Advisory Message监控</h2><p>&emsp;&emsp;ActiveMQ提供了一些额外的信息帮助用户获取系统状态，这些额外信息都存在主题中，以 ActiveMQ.Advisory. 开头。这些信息可以通过前面说的任何一种方式查询。这些消息包括Queue/Topic创建销毁的次数，消费比较慢的消费者统计等等。可以参考 官方文档 查询每个Advisory Message的意义。</p>
+<h2 id="插件监控"><a href="#插件监控" class="headerlink" title="插件监控"></a>插件监控</h2><p>&emsp;&emsp;ActiveMQ还提供了一些额外的插件来监控系统，主要有可视化插件监控和统计插件监控，需要在activemq.xml中进行配置，最主要的有，和。对于一些生成图标的监控系统比较有用。下面是 connectionDotFilePlugin的使用截图。图9：<br><img src="images/9.png" alt="ActiveMQ"></p>
+<h2 id="第三方监控"><a href="#第三方监控" class="headerlink" title="第三方监控"></a>第三方监控</h2><p>&emsp;&emsp;最后一种监控方式就是第三方提供的监控，这种监控主要包括ActiveMQ Monitor，Apache ActiveMQBrowser ，HermesJMS等。由于是第三方提供的监控平台，所以一旦activemq升级，监控平台不升级，可能会带来兼容问题，所以请谨慎使用。</p>
+<p>&emsp;&emsp;另外不得不提的是hawtio，也是一个第三方提供的监控平台，提供了HTML5的绚丽界面。已经在ActiveMQ 5.9的版本中内嵌入发布包。但是由于Apache内部的意见分歧，在ActiveMQ 5.9.1的版本中又将其删除。如果想用，只能自己下载 hawtio部署到ActiveMQ的环境中。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ActiveMQ/" rel="tag"># ActiveMQ</a>
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/15/ActiveMQ集群/" rel="next" title="ActiveMQ集群">
+                <i class="fa fa-chevron-left"></i> ActiveMQ集群
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars0.githubusercontent.com/u/49423885?s=460&v=4" alt="rgou">
+            
+              <p class="site-author-name" itemprop="name">rgou</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/ronggou" title="GitHub &rarr; https://github.com/ronggou" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:gourongxx@foxmail.com" title="E-Mail &rarr; mailto:gourongxx@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ需要监控的内容"><span class="nav-number">1.</span> <span class="nav-text">ActiveMQ需要监控的内容</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#监控硬件物理空间"><span class="nav-number">1.1.</span> <span class="nav-text">监控硬件物理空间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#监控队列"><span class="nav-number">1.2.</span> <span class="nav-text">监控队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#监控主题"><span class="nav-number">1.3.</span> <span class="nav-text">监控主题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#监控订阅者"><span class="nav-number">1.4.</span> <span class="nav-text">监控订阅者</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ监控方法"><span class="nav-number">2.</span> <span class="nav-text">ActiveMQ监控方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Web-Console监控"><span class="nav-number">2.1.</span> <span class="nav-text">Web Console监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#命令行监控"><span class="nav-number">2.2.</span> <span class="nav-text">命令行监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JMX监控"><span class="nav-number">2.3.</span> <span class="nav-text">JMX监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JMX-REST-API"><span class="nav-number">2.4.</span> <span class="nav-text">JMX REST API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Advisory-Message监控"><span class="nav-number">2.5.</span> <span class="nav-text">Advisory Message监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插件监控"><span class="nav-number">2.6.</span> <span class="nav-text">插件监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第三方监控"><span class="nav-number">2.7.</span> <span class="nav-text">第三方监控</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-snowflake-o"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">rgou</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.1"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
